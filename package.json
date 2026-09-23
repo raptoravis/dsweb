@@ -1,0 +1,15 @@
+{
+  "name": "dsweb",
+  "private": true,
+  "version": "0.1.0",
+  "description": "多用户对话面板：frontend + backend 驱动 deepseek-harness",
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "build": "npm run build --workspace backend && npm run build --workspace frontend",
+    "typecheck": "npm run typecheck --workspace backend && npm run typecheck --workspace frontend",
+    "test": "npm run test --workspace backend"
+  }
+}

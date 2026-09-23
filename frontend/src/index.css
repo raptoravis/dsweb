@@ -1,0 +1,349 @@
+/* Theme tokens — swap these variables (or add a data-theme block) to restyle. */
+:root {
+  --color-bg: #f7f8fa;
+  --color-surface: #ffffff;
+  --color-border: #e4e7ec;
+  --color-text: #1a1d24;
+  --color-text-muted: #6b7280;
+  --color-accent: #3b82f6;
+  --color-accent-hover: #2563eb;
+  --color-danger: #ef4444;
+  --color-user-bubble: #3b82f6;
+  --color-user-text: #ffffff;
+  --color-assistant-bubble: #f1f3f6;
+  --color-trace-bg: #fafbfc;
+  --radius: 10px;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei",
+    Roboto, Helvetica, Arial, sans-serif;
+}
+
+[data-theme="dark"] {
+  --color-bg: #101216;
+  --color-surface: #1a1d24;
+  --color-border: #2a2e38;
+  --color-text: #e6e8ee;
+  --color-text-muted: #9aa1ad;
+  --color-accent: #60a5fa;
+  --color-accent-hover: #93c5fd;
+  --color-danger: #f87171;
+  --color-user-bubble: #2563eb;
+  --color-user-text: #ffffff;
+  --color-assistant-bubble: #262b35;
+  --color-trace-bg: #20242c;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  border-radius: 6px;
+  padding: 6px 12px;
+}
+
+button:hover {
+  border-color: var(--color-accent);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+button.primary {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #fff;
+}
+
+button.primary:hover {
+  background: var(--color-accent-hover);
+}
+
+button.danger:hover {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+input,
+textarea {
+  font: inherit;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  width: 100%;
+}
+
+/* Auth screen */
+.auth-screen {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.auth-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 28px;
+  width: 340px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.auth-card h1 {
+  font-size: 20px;
+  margin: 0 0 4px;
+}
+
+.auth-error {
+  color: var(--color-danger);
+  font-size: 13px;
+  min-height: 18px;
+}
+
+/* Panel layout */
+.panel {
+  height: 100%;
+  display: flex;
+}
+
+.sidebar {
+  width: 280px;
+  border-right: 1px solid var(--color-border);
+  background: var(--color-surface);
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-header {
+  padding: 14px;
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sidebar-header .account {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.conversation-list {
+  overflow-y: auto;
+  flex: 1;
+}
+
+.conversation-item {
+  padding: 12px 14px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.conversation-item:hover {
+  background: var(--color-trace-bg);
+}
+
+.conversation-item.active {
+  background: var(--color-trace-bg);
+  box-shadow: inset 3px 0 0 var(--color-accent);
+}
+
+.conversation-item .title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.conversation-item .title {
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.conversation-item .time {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.conversation-item .actions {
+  display: flex;
+  gap: 6px;
+  opacity: 0;
+  transition: opacity 0.1s;
+}
+
+.conversation-item:hover .actions {
+  opacity: 1;
+}
+
+.conversation-item .actions button {
+  font-size: 12px;
+  padding: 2px 8px;
+}
+
+/* Main message area */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.message-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.message {
+  max-width: 72%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.message.user {
+  align-self: flex-end;
+}
+
+.message.assistant {
+  align-self: flex-start;
+}
+
+.message .bubble {
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.message.user .bubble {
+  background: var(--color-user-bubble);
+  color: var(--color-user-text);
+  border-bottom-right-radius: 2px;
+}
+
+.message.assistant .bubble {
+  background: var(--color-assistant-bubble);
+  border-bottom-left-radius: 2px;
+}
+
+.message .cursor {
+  display: inline-block;
+  animation: blink 1s steps(1) infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* Trace (collapsed by default) */
+.trace {
+  background: var(--color-trace-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  font-size: 12px;
+}
+
+.trace summary {
+  padding: 6px 10px;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  user-select: none;
+}
+
+.trace .steps {
+  padding: 4px 10px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.trace-step {
+  border-left: 2px solid var(--color-border);
+  padding-left: 8px;
+}
+
+.trace-step.running {
+  border-left-color: var(--color-accent);
+}
+
+.trace-step.error {
+  border-left-color: var(--color-danger);
+}
+
+.trace-step .step-title {
+  font-weight: 600;
+}
+
+.trace-step .step-detail {
+  color: var(--color-text-muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+/* Composer */
+.composer {
+  border-top: 1px solid var(--color-border);
+  padding: 14px;
+  display: flex;
+  gap: 10px;
+  background: var(--color-surface);
+}
+
+.composer textarea {
+  resize: none;
+  min-height: 42px;
+  max-height: 160px;
+}
+
+.composer button {
+  align-self: flex-end;
+  white-space: nowrap;
+}
+
+.empty-state {
+  margin: auto;
+  color: var(--color-text-muted);
+  text-align: center;
+}
