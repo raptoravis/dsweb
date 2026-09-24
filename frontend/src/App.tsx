@@ -137,6 +137,8 @@ export default function App() {
           setPending({ content: text, trace: [...trace] });
         } else if (ev.type === "status") {
           setStreaming(ev.status === "running");
+        } else if (ev.type === "error") {
+          setBanner(ev.message);
         }
       });
     } catch (err) {

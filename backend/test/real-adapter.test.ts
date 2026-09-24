@@ -17,9 +17,8 @@ describe("RealDshAdapter (thin test against a fake SDK)", () => {
       userHome: "/tmp/dsweb-real-test",
     });
     try {
-      await adapter.prompt("session-1", "hello");
       const events: DshEvent[] = [];
-      for await (const event of adapter.follow("session-1")) {
+      for await (const event of adapter.turn("session-1", "hello")) {
         events.push(event);
         if (event.type === "done") break;
       }

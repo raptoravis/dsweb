@@ -208,13 +208,6 @@ export function createApp(db: Db, dsh: DshService): express.Express {
     db.insertMessage(conv.id, "user", content, []);
     db.touchConversation(conv.id);
 
-    try {
-      await dsh.prompt(req.user!.id, conv.dsh_session_id, content);
-    } catch (err) {
-      res.status(502).json({ error: "agent 引擎不可用" });
-      return;
-    }
-
     res.status(200);
     res.set(sseHeaders);
     res.flushHeaders();
@@ -226,13 +219,19 @@ export function createApp(db: Db, dsh: DshService): express.Express {
       if (i >= 0) trace[i] = step;
       else trace.push(step);
     };
+    const persistError = (message: string): void => {
+      db.insertMessage(conv.id, "assistant", text, [
+        ...trace,
+        { id: "error", kind: "step", title: "错误", status: "error", detail: { message } },
+      ]);
+      db.touchConversation(conv.id);
+    };
     // A dropped client must not abort the turn: keep consuming and persisting
     // so the in-flight reply still lands in history (recoverable, not lost).
     const writable = (): boolean => !res.destroyed && !res.writableEnded;
 
     try {
-      const events = dsh.follow(req.user!.id, conv.dsh_session_id);
-      for await (const event of events) {
+      for await (const event of dsh.turn(req.user!.id, conv.dsh_session_id, content)) {
         if (writable()) res.write(sseFrame(event));
         if (event.type === "assistant") text += event.delta;
         else if (event.type === "trace") upsertTrace(event.step);
@@ -243,14 +242,14 @@ export function createApp(db: Db, dsh: DshService): express.Express {
           db.touchConversation(conv.id);
           break;
         } else if (event.type === "error") {
-          db.insertMessage(conv.id, "assistant", text, [
-            ...trace,
-            { id: "error", kind: "step", title: "错误", status: "error", detail: { message: event.message } },
-          ]);
-          db.touchConversation(conv.id);
+          persistError(event.message);
           break;
         }
       }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "agent 引擎不可用";
+      if (writable()) res.write(sseFrame({ type: "error", message }));
+      persistError(message);
     } finally {
       res.end();
     }

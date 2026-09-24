@@ -6,6 +6,11 @@
  * user's runtime; a `DshService` drives the runtime keyed by user id (the
  * process manager is the real implementation, the fake service is the test
  * double).
+ *
+ * `turn` enqueues a user message and streams the resulting assistant events
+ * until `done`/`error`, so enqueue + stream are one atomic operation. The
+ * process manager serializes turns per session, which keeps a shared runtime's
+ * event queue single-consumer.
  */
 
 /** One step in an assistant turn's execution trace (collapsed by default). */
@@ -32,10 +37,8 @@ export type DshEvent =
 
 /** Drives one user's dsh runtime. */
 export interface DshAdapter {
-  /** Enqueue a user turn on a session, creating the session lazily. */
-  prompt(sessionId: string, content: string): Promise<void>;
-  /** Stream the in-flight (or buffered) events for a session until done/error. */
-  follow(sessionId: string): AsyncIterable<DshEvent>;
+  /** Enqueue a user turn and stream its events until done/error. */
+  turn(sessionId: string, content: string): AsyncIterable<DshEvent>;
   /** Tear down the underlying process/runtime. */
   close(): Promise<void>;
 }
@@ -47,7 +50,6 @@ export interface DshAdapterFactory {
 
 /** Drives dsh keyed by user id. */
 export interface DshService {
-  prompt(userId: string, sessionId: string, content: string): Promise<void>;
-  follow(userId: string, sessionId: string): AsyncIterable<DshEvent>;
+  turn(userId: string, sessionId: string, content: string): AsyncIterable<DshEvent>;
   closeAll(): Promise<void>;
 }

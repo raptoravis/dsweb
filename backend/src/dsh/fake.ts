@@ -1,5 +1,4 @@
 import { randomUUID } from "node:crypto";
-import { AsyncQueue } from "./async-queue.js";
 import type { DshAdapter, DshAdapterFactory, DshEvent } from "./types.js";
 
 /**
@@ -12,7 +11,9 @@ export type Responder = (
   content: string,
 ) => AsyncIterable<DshEvent> | DshEvent[];
 
-function toAsyncIter(events: AsyncIterable<DshEvent> | DshEvent[]): AsyncIterable<DshEvent> {
+function toAsyncIter(
+  events: AsyncIterable<DshEvent> | DshEvent[],
+): AsyncIterable<DshEvent> {
   if (Symbol.asyncIterator in events) return events as AsyncIterable<DshEvent>;
   return (async function* () {
     yield* events as DshEvent[];
@@ -24,13 +25,12 @@ function errorMessage(err: unknown): string {
 }
 
 /**
- * In-memory session storage shared by every `FakeDshAdapter` instance, so
- * session state survives adapter recycle — the same way a real harness home
- * outlives its process. Because session ids are globally unique, the flat map
- * is naturally per-user isolated.
+ * In-memory session state shared by every `FakeDshAdapter` instance, so a
+ * session's scripted responder survives adapter recycle — the same way a real
+ * harness home outlives its process. Because session ids are globally unique,
+ * the flat map is naturally per-user isolated.
  */
 export class FakeDshStore {
-  private sessions = new Map<string, { queue: AsyncQueue<DshEvent> }>();
   private responders = new Map<string, Responder>();
 
   constructor(private readonly responder: Responder = defaultResponder) {}
@@ -43,64 +43,28 @@ export class FakeDshStore {
   responderFor(sessionId: string): Responder {
     return this.responders.get(sessionId) ?? this.responder;
   }
-
-  ensure(sessionId: string): { queue: AsyncQueue<DshEvent> } {
-    let s = this.sessions.get(sessionId);
-    if (!s) {
-      s = { queue: new AsyncQueue<DshEvent>() };
-      this.sessions.set(sessionId, s);
-    }
-    return s;
-  }
-
-  closeAll(): void {
-    for (const s of this.sessions.values()) s.queue.close();
-    this.sessions.clear();
-  }
 }
 
 /** The fake dsh runtime for one user's harness home. */
 export class FakeDshAdapter implements DshAdapter {
-  constructor(
-    private readonly store: FakeDshStore,
-    private readonly userHome: string,
-  ) {}
+  constructor(private readonly store: FakeDshStore) {}
 
-  async prompt(sessionId: string, content: string): Promise<void> {
-    const session = this.store.ensure(sessionId);
+  async *turn(sessionId: string, content: string): AsyncIterable<DshEvent> {
     const responder = this.store.responderFor(sessionId);
-    void this.run(sessionId, session.queue, responder, content);
-  }
-
-  private async run(
-    sessionId: string,
-    queue: AsyncQueue<DshEvent>,
-    responder: Responder,
-    content: string,
-  ): Promise<void> {
     try {
       for await (const event of toAsyncIter(responder(content))) {
-        queue.push(event);
+        yield event;
         if (event.type === "done" || event.type === "error") return;
       }
-      queue.push({ type: "done", messageId: randomUUID() });
+      yield { type: "done", messageId: randomUUID() };
     } catch (err) {
-      queue.push({ type: "error", message: errorMessage(err) });
-    }
-  }
-
-  async *follow(sessionId: string): AsyncIterable<DshEvent> {
-    const session = this.store.ensure(sessionId);
-    for await (const event of session.queue) {
-      yield event;
-      if (event.type === "done" || event.type === "error") return;
+      yield { type: "error", message: errorMessage(err) };
     }
   }
 
   async close(): Promise<void> {
-    // A real adapter would terminate its subprocess here. The fake shares its
+    // A real adapter terminates its subprocess here; the fake shares its
     // store, so closing one handle must not drop the shared session state.
-    void this.userHome;
   }
 }
 
@@ -108,8 +72,8 @@ export class FakeDshAdapter implements DshAdapter {
 export class FakeAdapterFactory implements DshAdapterFactory {
   constructor(private readonly store: FakeDshStore) {}
 
-  async create(userHome: string): Promise<DshAdapter> {
-    return new FakeDshAdapter(this.store, userHome);
+  async create(): Promise<DshAdapter> {
+    return new FakeDshAdapter(this.store);
   }
 }
 

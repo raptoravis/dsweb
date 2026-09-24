@@ -26,9 +26,8 @@ describe("real dsh smoke (dedicated env only)", () => {
       });
       try {
         const sessionId = `smoke-${Date.now()}`;
-        await adapter.prompt(sessionId, '只回复两个汉字："好的"。');
         let text = "";
-        for await (const event of adapter.follow(sessionId)) {
+        for await (const event of adapter.turn(sessionId, '只回复两个汉字："好的"。')) {
           if (event.type === "assistant") text += event.delta;
           else if (event.type === "done") break;
           else if (event.type === "error") throw new Error(event.message);
