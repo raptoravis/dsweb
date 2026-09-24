@@ -1,3 +1,6 @@
+import { existsSync } from "node:fs";
+import { resolve } from "node:path";
+import { loadEnvFile } from "node:process";
 import { createApp } from "./app.js";
 import { loadConfig, type Config } from "./config.js";
 import { Db } from "./db.js";
@@ -25,6 +28,8 @@ export function buildDsh(config: Config): DshService {
 }
 
 function main(): void {
+  const envFile = resolve(process.cwd(), ".env");
+  if (existsSync(envFile)) loadEnvFile(envFile);
   const config = loadConfig();
   const db = new Db(config.dbPath);
   const dsh = buildDsh(config);

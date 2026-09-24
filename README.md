@@ -24,6 +24,8 @@ cd frontend && npm run dev
 
 浏览器打开 Vite 输出的地址（默认 http://localhost:5173）即可注册、登录、对话。
 
+要使用真实 dsh，在 `backend/.env` 中设置 `DEEPSEEK_API_KEY=...`，然后启动或重启 backend。该文件已被 Git 忽略；已有的进程环境变量优先。未设置 key 时继续使用 fake adapter。
+
 ## 环境变量（backend）
 
 | 变量 | 默认 | 说明 |

@@ -9,6 +9,19 @@ $env:PORT = $backendPort
 $env:VITE_DEV_PORT = $frontendPort
 $env:VITE_BACKEND_PORT = $backendPort
 
+# Install dependencies once if missing or out of date.
+$needInstall = -not (Test-Path -LiteralPath "node_modules")
+if (-not $needInstall) {
+    $lock = Get-Item -LiteralPath "package-lock.json" -ErrorAction SilentlyContinue
+    $nm   = Get-Item -LiteralPath "node_modules"
+    if ($lock -and $lock.LastWriteTime -gt $nm.LastWriteTime) { $needInstall = $true }
+}
+if ($needInstall) {
+    Write-Host "[run-all] installing dependencies..."
+    npm install
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+}
+
 Write-Host "[run-all] backend  -> http://localhost:$backendPort"
 Write-Host "[run-all] frontend -> http://localhost:$frontendPort"
 
